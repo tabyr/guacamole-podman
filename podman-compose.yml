@@ -1,0 +1,48 @@
+version: '3'
+
+networks:
+  net:
+    ipam:
+      config:
+        - subnet: 192.168.100.1/24
+
+volumes:
+  db:
+  shared:
+
+services:
+  db:
+    container_name: guacamole_db
+    image: mysql/mysql-server
+    networks:
+      - net
+    volumes:
+      - db:/var/lib/mysql
+    restart: always
+
+  guacd:
+    container_name: guacamole_guacd
+    image: guacamole/guacd
+    networks:
+      - net
+    volumes:
+      - shared:/home/guacd/shared
+    restart: always
+
+  guacamole:
+    depends_on:
+      - db
+      - guacd
+    container_name: guacamole_guacamole
+    image: guacamole/guacamole
+    networks:
+      - net
+    ports:
+      - 8080:8080
+    environment:
+      - GUACD_HOSTNAME=guacd
+      - MYSQL_HOSTNAME=db
+      - MYSQL_DATABASE=guacamole
+      - MYSQL_USER=guacamole
+      - MYSQL_PASSWORD=some_pass
+    restart: always
